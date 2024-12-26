@@ -1,30 +1,105 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:noted/domain/models/todo.dart';
+import 'package:noted/domain/repository/todo_repository.dart';
 import 'package:noted/main.dart';
 
+class MockTodoRepository implements TodoRepository {
+  final List<Todo> _todos = [];
+
+  Future<List<Todo>> getTodos() async => _todos;
+
+  Future<void> createTodo(String text) async {
+    _todos.add(Todo(
+      id: DateTime.now().millisecondsSinceEpoch,
+      text: text,
+      isCompleted: false,
+    ));
+  }
+
+  Future<void> deleteTodo(Todo todo) async {
+    _todos.remove(todo);
+  }
+
+  Future<void> toggleTodoCompletion(Todo todo) async {
+    final index = _todos.indexOf(todo);
+    if (index != -1) {
+      _todos[index] = Todo(
+        id: todo.id,
+        text: todo.text,
+        isCompleted: !todo.isCompleted,
+      );
+    }
+  }
+
+  @override
+  Future<void> createTodos(Todo newTodo) {
+    // TODO: implement createTodos
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteTodos(Todo todo) {
+    // TODO: implement deleteTodos
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Todo>> readTodos() {
+    // TODO: implement readTodos
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> updateTodos(Todo todo) {
+    // TODO: implement updateTodos
+    throw UnimplementedError();
+  }
+}
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Add, toggle, and delete a to-do item',
+      (WidgetTester tester) async {
+    final mockRepository = MockTodoRepository();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Build the app with the mock repository.
+    await tester.pumpWidget(MyApp(todoRepository: mockRepository));
 
-    // Tap the '+' icon and trigger a frame.
+    // Verify the initial state (no to-do items).
+    expect(find.byType(ListTile), findsNothing);
+
+    // Add a to-do item.
     await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Enter text in the dialog and confirm.
+    final textField = find.byType(TextField);
+    expect(textField, findsOneWidget);
+
+    await tester.enterText(textField, 'Test To-Do');
+    await tester.tap(find.text('Add +'));
+    await tester.pumpAndSettle();
+
+    // Verify the to-do item is displayed.
+    expect(find.text('Test To-Do'), findsOneWidget);
+    expect(find.byType(Checkbox), findsOneWidget);
+
+    // Toggle the completion status.
+    await tester.tap(find.byType(Checkbox));
+    await tester.pumpAndSettle();
+
+    // Verify the item is toggled (UI should update accordingly if designed to).
+    expect(
+      (tester.widget(find.byType(Checkbox)) as Checkbox).value,
+      isTrue,
+    );
+
+    // Delete the to-do item.
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    // Verify the to-do item is deleted.
+    expect(find.text('Test To-Do'), findsNothing);
+    expect(find.byType(ListTile), findsNothing);
   });
 }
