@@ -2,7 +2,7 @@
 
 import 'package:noted/domain/models/todo.dart';
 
-abstract class NotedRepository {
+abstract class TodoRepository {
   Future<void> createTodos(Todo newTodo);
 
   Future<List<Todo>> readTodos();
