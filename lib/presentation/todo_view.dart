@@ -20,7 +20,14 @@ class TodoView extends StatelessWidget {
                 value: todo.isCompleted,
                 onChanged: (value) => todoCubit.toggle(todo),
               ),
-              title: Text(todo.text),
+              title: Text(
+                todo.text,
+                style: todo.isCompleted
+                    ? const TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        color: Colors.grey)
+                    : const TextStyle(),
+              ),
               trailing: IconButton(
                 onPressed: () => todoCubit.deleteTodo(todo),
                 icon: const Icon(Icons.delete),
